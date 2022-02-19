@@ -1,0 +1,52 @@
+{:paths ["src"]
+ :deps  {org.clojure/clojure  {:mvn/version "1.11.0-alpha4"}
+         thheller/shadow-cljs {:mvn/version "2.16.12"}
+
+         com.google.javascript/closure-compiler-unshaded {:mvn/version "v20211006"}
+           ;; common libs
+         net.cgrand/xforms           {:mvn/version "0.19.2"}
+         funcool/promesa             {:git/url "https://github.com/funcool/promesa"
+                                      :sha     "147c15974484a4f3634e6ad095217806dbb58ee4"}
+         com.wsscode/async           {:git/url "https://github.com/wilkerlucio/wsscode-async"
+                                      :sha     "163b1cf5c9963d4c798aed4018461abdee754a1d"}
+         com.wsscode/promesa-bridges {:git/url "https://github.com/wilkerlucio/promesa-bridges"
+                                      :sha     "9439859ef0f517a1b9e453620c0eb72fba896f9e"}
+         lambdaisland/classpath      {:git/url "https://github.com/lambdaisland/classpath"
+                                      :sha     "ff96d4f07d5b12b2fe0d8b206eb4a3713ad222d6"}
+
+         org.clojure/core.match {:mvn/version "1.0.0"}
+         org.clojure/spec.alpha {:mvn/version "0.3.214"}
+         }
+
+ :aliases {:dev {:main-opts ["-m" "kev.sol.dev"
+                             "--middleware"
+                             "[shadow.cljs.devtools.server.nrepl/middleware,cider.nrepl/cider-middleware]"
+                             "--interactive" "--color"]}
+           :cljs {:extra-deps {org.clojure/clojurescript {:mvn/version "1.10.914"}
+                               cider/cider-nrepl         {:mvn/version "0.26.0"}
+
+                               kibu/pushy                {:mvn/version "0.3.8"}
+                               metosin/reitit-frontend {:mvn/version "0.5.15"}
+
+                                  ;; libs
+                               cljs-http/cljs-http    {:mvn/version "0.1.46"}
+                               re-frame/re-frame      {:mvn/version "1.3.0-rc2"}
+                               reagent/reagent        {:git/url "https://github.com/reagent-project/reagent"
+                                                       :sha     "b71fc361b85338ef4e4cd52a7b21e0f3f3f89628"}
+                               net.sekao/odoyle-rules {:git/url "https://github.com/oakes/odoyle-rules"
+                                                       :sha     "1009ef700a54bd4c8484a069cb6e652d1ed93d51"}}
+                  ;; for some reason :main-opts needs to not exist for release builds
+                  ;; lets see if the other one is fine
+                  :exec-fn kev.blog.dev/dev-repl
+                  :exec-args {:cider-args
+                              ["--middleware"
+                               "[shadow.cljs.devtools.server.nrepl/middleware,cider.nrepl/cider-middleware]"
+                               "--interactive" "--color"]}}
+           :build {:exec-fn kev.blog.dev/build
+                   :exec-args {:app :app
+                               ;; this assumes the we are hosted at /blog
+                               :release-opts {:config-merge [;; for cli compatibility this must be a list
+                                                             {:output-dir "release/js"
+                                                              :asset-path "/blog/js"
+                                                              :build-hooks [(shadow.cljs.build-report/hook
+                                                                             {:output-to "report.html"})]}]}}}}}
