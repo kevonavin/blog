@@ -46,7 +46,7 @@
                    :exec-args {:app :app
                                ;; this assumes the we are hosted at /blog
                                :release-opts {:config-merge [;; for cli compatibility this must be a list
-                                                             {:output-dir "release/js"
+                                                             {:output-dir "docs/js"
                                                               :asset-path "/blog/js"
                                                               :build-hooks [(shadow.cljs.build-report/hook
                                                                              {:output-to "report.html"})]}]}}}}}
