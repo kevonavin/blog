@@ -2,16 +2,58 @@
   "wrapper around the posts ns to create all the posts and make searchable"
   (:require
    [re-frame.loggers :refer [console]]
+   [clojure.spec.alpha :as s :include-macros true]
+   [clojure.string :as str]
    ["@mui/material" :as mui]))
+
+(declare hiccup->text)
 
 ;; TODO switch to defonce
 (defonce posts* (atom {}))
 
-(defn add-post! [{::keys [post-id] :as post}]
-  (swap! posts* assoc post-id post))
+(defn add-post! [{::keys [body post-id] :as post}]
+  (swap! posts*
+         assoc post-id (assoc post
+                              ::raw-text (hiccup->text body))))
 
 (defn all-posts []
   @posts*)
+
+;;;;;;;;;;;;;;;;;; utils ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(s/def ::react (s/cat :start #{:>}
+                      :react-elem any?
+                      :props (s/? map?)
+                      :childs (s/* (complement seq?))
+                      :child-seq (s/? seq?)))
+
+(s/def ::fn-leading (s/cat :start fn?
+                      :props (s/? map?)
+                      :childs (s/* (complement seq?))
+                      :child-seq (s/? seq?)))
+
+(s/def ::keyword-leading (s/cat :start keyword?
+                                :props (s/? map?)
+                                :childs (s/* (complement seq?))
+                                :child-seq (s/? seq?)))
+
+(s/def ::hiccup (s/or :react ::react
+                      :fn ::fn-leading
+                      :kw ::keyword-leading
+                      :string string?))
+
+(defn hiccup->text [hiccup]
+  (when-not (s/valid? ::hiccup hiccup)
+    (s/explain ::hiccup hiccup)
+    (throw (ex-info "failed to conform hiccup to extract text!!"
+                    {:explained (s/explain-str ::hiccup hiccup)})))
+  (let [[type {:keys [child-seq childs] :as parsed}] (s/conform ::hiccup hiccup)]
+    (cond
+      (= type :string) parsed
+      :else (->> (concat childs child-seq)
+                 (filter some?)
+                 (map hiccup->text)
+                 (str/join " ")))))
 
 (defn ->child-seq [text->elem chs]
   (->> chs
@@ -25,6 +67,9 @@
 (defn typog [var s]
   [:> mui/Typography (if (map? var) var {:variant var}) s])
 
+
+;;;;;;;;;;;;;;;;;;;;;; post stuff;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;
 (defn post-content [{::keys [created title] :as props} & children]
   [:> mui/Box
    {:sx {:width "100%"

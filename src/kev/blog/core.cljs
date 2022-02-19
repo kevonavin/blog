@@ -14,7 +14,7 @@
    ["@mui/material/styles" :refer [createTheme]]
    ["@mui/material" :as mui]
    ["fuzzysort" :as fuzzysort]
-   [clojure.spec.alpha :as s :include-macros true]
+   [net.cgrand.xforms :as x]
    [kev.blog.posts.test]))
 
 (declare render-page!)
@@ -29,40 +29,15 @@
     :groupEnd   (fn [& args] (apply js/console.groupEnd (map clj->js args)))})
   (render-page!))
 
-
-(s/def ::react (s/cat :start #{:>}
-                      :react-elem any?
-                      :props (s/? map?)
-                      :childs (s/* (complement seq?))
-                      :child-seq (s/? seq?)))
-
-(s/def ::fn-leading (s/cat :start fn?
-                      :props (s/? map?)
-                      :childs (s/* (complement seq?))
-                      :child-seq (s/? seq?)))
-
-(s/def ::keyword-leading (s/cat :start keyword?
-                                :props (s/? map?)
-                                :childs (s/* (complement seq?))
-                                :child-seq (s/? seq?)))
-
-(s/def ::hiccup (s/or :react ::react
-                      :fn ::fn-leading
-                      :kw ::keyword-leading
-                      :string string?))
-
-(defn hiccup->text [hiccup]
-  (when-not (s/valid? ::hiccup hiccup)
-    (s/explain ::hiccup hiccup)
-    (throw (ex-info "failed to conform hiccup to extract text!!"
-                    {:explained (s/explain-str ::hiccup hiccup)})))
-  (let [[type {:keys [child-seq childs] :as parsed}] (s/conform ::hiccup hiccup)]
-    (cond
-      (= type :string) parsed
-      :else (->> (concat childs child-seq)
-                 (filter some?)
-                 (map hiccup->text)
-                 (str/join " ")))))
+(defn partition-str [s n step]
+  (let [len (count s)]
+    (loop [cur 0
+           strs  []]
+      (if (>= cur len)
+        strs
+        (recur (+ cur step)
+               (conj strs
+                     (subs s cur (+ n cur))))))))
 
 (rf/reg-event-db
  :blog/init
@@ -71,9 +46,15 @@
           :blog/search-targets
           (clj->js
            (into []
-                 (map (fn [[_ {::posts/keys [body post-id]}]]
-                        {:id post-id
-                         :text (fuzzysort/prepare (hiccup->text body))}))
+                 (x/for [[_ {::posts/keys [raw-text title post-id]}] _
+                         :let [n 50
+                               step 20]
+                         [i tidbit] (map-indexed vector (partition-str raw-text n step))]
+                   {:id    post-id
+                    :raw   raw-text
+                    :start (* i step)
+                    :title title
+                    :text  (fuzzysort/prepare tidbit)})
                  (posts/all-posts))))))
 
 (rf/reg-sub
@@ -97,31 +78,49 @@
   (let [separator (rand-string 10)
         separated (fuzzysort/highlight result separator separator)]
     (->> (str/split separated (js/RegExp separator))
-         (partition 3)
+         (partition 3 2 '("" ""))
          (mapcat (fn [[start highlighted rest]]
                    (list start
                          [:mark highlighted]
-                         rest))))))
+                         rest)))
+         (dedupe)
+         (filter (complement (comp empty? posts/hiccup->text))))))
 
 (defn search-box []
-  (r/with-let [search-targets @(rf/subscribe [:blog/search-targets])
-               popover-anchor (r/atom nil)
-               search-results (r/atom nil)]
+  (r/with-let [popover-anchor (r/atom nil)
+               search-results (r/atom nil)
+               before-after-len 40]
     [:> mui/Box
      {:on-change (fn [e]
                    (swap! popover-anchor #(or % (.-target e)))
                    (let [search (.. e -target -value)
                          results (->> (fuzzysort/go search
-                                                    search-targets
-                                                    (clj->js {:limit 20
+                                                    @(rf/subscribe [:blog/search-targets])
+                                                    (clj->js {:limit 500
+                                                              :threshold -100
                                                               :allowTypo true
-                                                              :threshold -1000
-                                                              :keys [:id :text]}))
+                                                              :keys [:title :text]}))
                                       (map (fn [{title-result 0 text-result 1 :as obj}]
-                                             {:post-id (-> obj (aget "obj") (aget "id"))
-                                              :text-highlight (fuzzysort-result->hiccup text-result)
-                                              :title-highlight (or (seq (fuzzysort-result->hiccup title-result))
-                                                                   (-> obj (aget "obj") (aget "id")))})))]
+                                             (let [{:keys [id title start raw]} (js->clj (aget obj "obj")
+                                                                                         :keywordize-keys true)
+                                                   highlight-text (fuzzysort-result->hiccup text-result)
+                                                   text-len   (->> highlight-text
+                                                                   (vector :div)
+                                                                   posts/hiccup->text
+                                                                   count)]
+                                               {:post-id id
+                                                :text-highlight
+                                                (concat
+                                                 ["..." (subs raw (- start before-after-len) start)]
+                                                 highlight-text
+                                                 [(subs raw start (+ start text-len before-after-len)) "..."])
+                                                :title-highlight (or (seq (fuzzysort-result->hiccup title-result))
+                                                                     title)})))
+                                      (group-by :post-id)
+                                      (map (fn [[_ [best & _]]]
+                                             (console :log "best" best)
+                                             best))
+                                      (take 20))]
                      (reset! search-results
                              results)))}
      [:> mui/TextField
@@ -130,7 +129,7 @@
        :label "search"}]
      [:> mui/Popover
       {:anchor-origin {:vertical "bottom"
-                       :horizontal "right"}
+                       :horizontal "center"}
        :sx {:width "100%"}
        :id "simple-popover"
        :disable-auto-focus true
@@ -215,7 +214,7 @@
   (posts/add-post!
    {::posts/post-id "home"
     ::posts/body
-    [:> mui/Box
+    [:> mui/Box {:m 1}
      (->> (posts/all-posts)
           (map second)
           (filter #(not= "home" (::posts/post-id %)))
@@ -228,7 +227,7 @@
                                                       :sx {}}
                                    %])))]})
 
-  (rf/dispatch [:blog/init])
+  (rf/dispatch-sync [:blog/init])
 
   (rdom/render
    [:> mui/ThemeProvider
