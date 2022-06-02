@@ -190,10 +190,13 @@
   (let [post-id @(rf/subscribe [:page/current])]
     (::posts/body (get (posts/all-posts) post-id [:div "not found"]))))
 
+;; currently, we don't have anything set up
+;; e.g. bg color and most text color doesn't rely on the theme
 (def theme (createTheme
             (clj->js
              ;; see https://fonts.google.com/ for options
-             {:typography {:fontFamily "Tinos"}})))
+             {:typography {:fontFamily "Tinos"}
+              :palette {:mode :light}})))
 
 (defn ^:dev/after-load render-page! []
 

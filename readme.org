@@ -1,67 +1,22 @@
 * blog
 
-for fun
+This is a blog (template) with:
+- all posts loaded into the artifact (i.e. no refresh when switching between posts)
+- fuzzy search over all the post content + titles
+- posts written directly in ClojureScript (with help of macros) for extensibility
+** running stuff
+- repl: =clj -X:cljs=
+- make a post: create =src/kev/blog/posts/mypost.cljs= (must be in that subdir).
+- build: =clj -X:cljs:build=. will produce artifact in /docs/js
+- test the build artifact by using =python3 -m http.server= inside of the /docs directory.
+  Must change index.html since this is expected to be run at /blog path with gh pages
 ** impl
 - I want it to be like https://project-serum.github.io/anchor/getting-started/introduction.html
   (slide the width of the page back and forth and see how it scales!)
 *** todo
-- [ ] build fn. Add a blog post, run this, and it will do everything and post it even
-- [ ] search. - maybe https://fusejs.io/
-** plan
-- needs
-  1) can be usable offline.
-  2) stored as single-page web app, with all content built into the single web page.
-     - i.e. no refresh for clicking on other posts within the blog
-     - this in itself might make me want to write it myself in clojure.
-       - obvi needs to have hrefs in browser though.
-     - what is the format? a zip file?
-  3) in a format such that I can switch to somethign else later
-     - this doesn't preclude using a lisp-like custom thing.
-       however, I need to preserve whitespace in certain places.
-  4) extensible. I can embed anything I want
-     - fonts / code / colors? maybe inline demos?
-  5) searchable - any blog content text
-
-- wants
-  - id-based links?
-  - analytics?
-- ideas
-  - custom format that's basically a lisp.
-    - Could write it directly in clojure.
-      - Just a clojure macro that transforms everything.
-      - This could be hard to transform into a different format.
-        Or would it? Might be as easy as that.
-      - IDK if I'll really need some fancy embedded stuff in the future.
-
-  - *posts are written directly in clojure*
-    - not good editor support
-    - not very sharable
-      - couldn't pass directly to spell checker thing.
-    - easily extensible though
-    - requires rebuild on every post. Which I think is fine since I have
-      to include all posts in the original artifact anyways
-    - everything is macros right? so you can't straight up pull the content
-      into some reagent components, you have to convert to something else
-      and then convert to that. Actually, shit I think you could
-      convert straight to that.
-      - could do something that's like defpost and registers it in a
-        centralized place?
-    - how to collect all posts into a db though?
-      - I guess if it's just code you'd need a centralized
-        thing to collect it all. I don't think you could just
-        "find all namespaces?"
-      Fuck I like the idea of id's.
-      But it'd be so nice having it be directly clojureScript.
-
-  - posts written in org mode?
-    - to make it as custom as I'd like, I'd have to make an org parser
-      basically. I'm not just going to org-export my whole blog
-
-  - org-roam to generate a blog so you can get backlinks
-    - it would be cool to have backlinks. They're only super useful when you have
-      a lot of content though.
-    - don't need org-roam to make backlinks, can easily do manually.
-    - org-export is *probably* extendable. I don't know if I could exend it to
-      the point of embedding actual clojure code though.
-
-
+- [x] build fn. Add a blog post, run this, and it will do everything and post it even
+- [x] search. - maybe https://fusejs.io/
+  - no. [[https://github.com/farzher/fuzzysort][fuzzysort]] was better.
+  - I also implemented a custom solution on top where I chop up the text of all
+    the posts into bits, search over those bits and display the bits w/ text around
+    them and it turned out nice
