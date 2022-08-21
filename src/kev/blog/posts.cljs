@@ -65,24 +65,30 @@
                  (with-meta x {:key i})))))
 
 (defn typog [var s]
-  [:> mui/Typography (if (map? var) var {:variant var}) s])
+  [:> mui/Typography
+   (merge
+    {:gutter-bottom false}
+    (if (map? var) var {:variant var}))
+   s])
 
 
 ;;;;;;;;;;;;;;;;;;;;;; post stuff;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;
+
 (defn post-content [{::keys [created title] :as props} & children]
   [:> mui/Box
-   {:sx {:width "100%"
-         :display "flex"
+   {:sx {:width           "100%"
+         :display         "flex"
          :justify-content "center"}}
    [:> mui/Box
-    {:sx {:max-width "70ch"
-          :width "100%"}}
+    {:sx {:max-width "65ch" ;; this seems equal to PG's width
+          :width     "100%"}}
     [typog "h4" title]
-    [typog {:variant "body2"
-            :color "text.secondary"} (str "created: " created)]
-    [:> mui/Box {:sx {:mb 1.5}}]
-    [typog {:variant "body1"
+    [:> mui/Box {:sx {:mb 2}}]
+    [typog {:variant "body1"}
+     (str created)]
+    [:> mui/Box {:sx {:mb 2}}]
+    [typog {:variant   "body1"
             :component "div"}
      (->child-seq #(do [:span %])
                   children)]]])
@@ -93,8 +99,22 @@
    [:> mui/Box
     {:sx {:ml "-2ch"
           :position "absolute"}}
-    [:> mui/Typography {:variant "body1"} "\u2022"]]
-   (->child-seq #(do [:> mui/Typography {:variant "body1"
-                                                   :sx {}}
+    [typog {:variant "body1"} "\u2022"]]
+   (->child-seq #(do [typog {:variant "body1" :component "span"}
                       %])
                 children)])
+
+(defn link [display href]
+  [:> mui/Link {:href href} display])
+
+(defn indent []
+  [:> mui/Box {:component "span" :mr 4}])
+
+(defn br []
+  [:<>
+   [:br]
+   [:br]])
+
+(defn highlight [text]
+  [:> mui/Box {:component "span"
+               :bgcolor "secondary.dark"} text])

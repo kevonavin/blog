@@ -5,7 +5,9 @@ This is a blog (template) with:
 - fuzzy search over all the post content + titles
 - posts written directly in ClojureScript (with help of macros) for extensibility
 ** running stuff
+- run =yarn install=
 - repl: =clj -X:cljs=
+  - then run =cider-jack-clj&cljs=
 - make a post: create =src/kev/blog/posts/mypost.cljs= (must be in that subdir).
 - build: =clj -X:cljs:build=. will produce artifact in /docs/js
 - test the build artifact by using =python3 -m http.server= inside of the /docs directory.

@@ -12,22 +12,14 @@
    [reitit.frontend.easy :as rfe]
    [reitit.frontend]
    ["@mui/material/styles" :refer [createTheme]]
+   ["@mui/material/CssBaseline" :default CssBaseline]
    ["@mui/material" :as mui]
    ["fuzzysort" :as fuzzysort]
    [net.cgrand.xforms :as x]
-   [kev.blog.posts.test]))
+   [kev.blog.generated-posts])
+  )
 
-(declare render-page!)
 
-(defn ^:export init []
-  (re-frame.loggers/set-loggers!
-   {:debug (fn [& args] (apply js/console.debug (map clj->js args)))
-    :log   (fn [& args] (apply js/console.log (map clj->js args)))
-    :warn   (fn [& args] (apply js/console.warn (map clj->js args)))
-    :error   (fn [& args] (apply js/console.error (map clj->js args)))
-    :group   (fn [& args] (apply js/console.group (map clj->js args)))
-    :groupEnd   (fn [& args] (apply js/console.groupEnd (map clj->js args)))})
-  (render-page!))
 
 (defn partition-str [s n step]
   (let [len (count s)]
@@ -93,22 +85,22 @@
     [:> mui/Box
      {:on-change (fn [e]
                    (swap! popover-anchor #(or % (.-target e)))
-                   (let [search (.. e -target -value)
+                   (let [search  (.. e -target -value)
                          results (->> (fuzzysort/go search
                                                     @(rf/subscribe [:blog/search-targets])
-                                                    (clj->js {:limit 500
+                                                    (clj->js {:limit     500
                                                               :threshold -100
                                                               :allowTypo true
-                                                              :keys [:title :text]}))
+                                                              :keys      [:title :text]}))
                                       (map (fn [{title-result 0 text-result 1 :as obj}]
                                              (let [{:keys [id title start raw]} (js->clj (aget obj "obj")
                                                                                          :keywordize-keys true)
-                                                   highlight-text (fuzzysort-result->hiccup text-result)
-                                                   text-len   (->> highlight-text
-                                                                   (vector :div)
-                                                                   posts/hiccup->text
-                                                                   count)]
-                                               {:post-id id
+                                                   highlight-text               (fuzzysort-result->hiccup text-result)
+                                                   text-len                     (->> highlight-text
+                                                                                     (vector :div)
+                                                                                     posts/hiccup->text
+                                                                                     count)]
+                                               {:post-id         id
                                                 :text-highlight
                                                 (concat
                                                  ["..." (subs raw (- start before-after-len) start)]
@@ -125,38 +117,38 @@
                              results)))}
      [:> mui/TextField
       {:variant "standard"
-       :size "small"
-       :label "search"}]
+       :size    "small"
+       :label   "search"}]
      [:> mui/Popover
-      {:anchor-origin {:vertical "bottom"
-                       :horizontal "center"}
-       :sx {:width "100%"}
-       :id "simple-popover"
+      {:anchor-origin      {:vertical   "bottom"
+                            :horizontal "center"}
+       :sx                 {:width "100%"}
+       :id                 "simple-popover"
        :disable-auto-focus true
-       :on-close #(reset! popover-anchor nil)
-       :anchor-el @popover-anchor
-       :open (boolean (and @popover-anchor (seq @search-results)))}
+       :on-close           #(reset! popover-anchor nil)
+       :anchor-el          @popover-anchor
+       :open               (boolean (and @popover-anchor (seq @search-results)))}
       [:> mui/List
        {:sx {:width "100%"}}
        (map-indexed
         (fn [i {:keys [text-highlight title-highlight post-id]}]
           ^{:key i}
           [:> mui/ListItemButton
-           {:sx {}
+           {:sx       {}
             :on-click (fn [_]
                         (reset! popover-anchor nil)
                         (rf/dispatch [:posts/set post-id]))}
            [:> mui/Box
             {:sx {:m 1}}
             [:> mui/Typography
-             {:variant "h5"
+             {:variant   "h5"
               :component "div"}
              (posts/->child-seq #(do [:span %])
                                 title-highlight)]
             [:> mui/Typography
              {:gutter-bottom true
-              :component "div"
-              :variant "subtitle1"}
+              :component     "div"
+              :variant       "subtitle1"}
              (posts/->child-seq #(do [:span %])
                                 text-highlight)]]])
         @search-results)]]]))
@@ -164,39 +156,59 @@
 (defn header []
   [:<>
    [:> mui/Grid
-    {:container true
+    {:container       true
      :justify-content "space-between"
-     :sx {:width "100%"}}
+     :sx              {:width "100%"}}
     [:> mui/Grid
      {:item true
-      :sx {:m 1}}
+      :sx   {}}
      [:> mui/Link
-      {:href (rfe/href ::root)
+      {:href      (rfe/href ::root)
+       :color     "text.primary"
        :underline "hover"
-       :color "inherit"
-       :variant "h4"}
+       :variant   "h4"}
       "Kevin's Blog"]]
     [:> mui/Grid
      {:item true}
      [search-box]]]
    [:> mui/Divider {:variant "middle"
-                    :sx {:mb 2}}]])
+                    :sx      {:mb 2
+                              :mt 2}}]])
 
 (defn post-link [{pid ::posts/post-id
                   title ::posts/title}]
-  [:a {:href  (rfe/href ::post {:id pid})} title])
+  [:> mui/Link {:href (rfe/href ::post {:id pid})} title])
 
 (defn post []
   (let [post-id @(rf/subscribe [:page/current])]
     (::posts/body (get (posts/all-posts) post-id [:div "not found"]))))
 
+(defn homepage []
+  [:> mui/Box {:m 1}
+   (->> (posts/all-posts)
+        (map second)
+        (filter #(not= "home" (::posts/post-id %)))
+        (sort-by ::posts/created)
+        (reverse)
+        (map (fn [post]
+               [:<>
+                [post-link post]
+                [:div]]))
+        (posts/->child-seq
+         #(do [:> mui/Typography {:variant "body1"} %])))])
+
 ;; currently, we don't have anything set up
 ;; e.g. bg color and most text color doesn't rely on the theme
+;;
 (def theme (createTheme
             (clj->js
              ;; see https://fonts.google.com/ for options
-             {:typography {:fontFamily "Tinos"}
-              :palette {:mode :light}})))
+             {:typography {:fontFamily "Roboto Mono"
+                           :body1      {:fontSize "0.9rem"}} ; note: change index.html to download your font
+              :palette    {:mode       :dark
+                           :text       {:primary   "#e0e0e0"
+                                        :secondary "#7f7f7f"}
+                           :background {:default "#2b2525"}}})))
 
 (defn ^:dev/after-load render-page! []
 
@@ -216,26 +228,28 @@
 
   (posts/add-post!
    {::posts/post-id "home"
-    ::posts/body
-    [:> mui/Box {:m 1}
-     (->> (posts/all-posts)
-          (map second)
-          (filter #(not= "home" (::posts/post-id %)))
-          (sort-by ::posts/created)
-          (map (fn [post]
-                 [:<>
-                  [post-link post]
-                  [:div]]))
-          (posts/->child-seq #(do [:> mui/Typography {:variant "body1"
-                                                      :sx {}}
-                                   %])))]})
+    ::posts/body    [homepage]})
 
   (rf/dispatch-sync [:blog/init])
 
   (rdom/render
    [:> mui/ThemeProvider
     {:theme theme}
-    [:div
+    [:> CssBaseline]
+    [:> mui/Box
+     {:m 1.5}
      [header]
      [post]]]
    (js/document.querySelector "#app")))
+
+
+
+(defn ^:export init []
+  (re-frame.loggers/set-loggers!
+   {:debug (fn [& args] (apply js/console.debug (map clj->js args)))
+    :log   (fn [& args] (apply js/console.log (map clj->js args)))
+    :warn   (fn [& args] (apply js/console.warn (map clj->js args)))
+    :error   (fn [& args] (apply js/console.error (map clj->js args)))
+    :group   (fn [& args] (apply js/console.group (map clj->js args)))
+    :groupEnd   (fn [& args] (apply js/console.groupEnd (map clj->js args)))})
+  (render-page!))

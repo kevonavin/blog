@@ -12,4 +12,5 @@
         :compiler-options {#_#_:output-feature-set :es5
                            :optimizations      :simple}
         :devtools   {:http-root "public"
-                     :http-port 8020}}}}
+                     :http-port 8020}
+        :build-hooks [(kev.blog.dev/compile-posts)]}}}
