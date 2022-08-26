@@ -13,12 +13,12 @@ This is a blog (template) with:
 - test the build artifact by using =python3 -m http.server= inside of the /docs directory.
   Must change index.html since this is expected to be run at /blog path with gh pages
 ** impl
-- I want it to be like https://project-serum.github.io/anchor/getting-started/introduction.html
-  (slide the width of the page back and forth and see how it scales!)
 *** todo
+- [ ] make a [[https://patrickcollison.com/questions][questions]] page
+- [ ] link hover shows full link
 - [x] build fn. Add a blog post, run this, and it will do everything and post it even
 - [x] search. - maybe https://fusejs.io/
   - no. [[https://github.com/farzher/fuzzysort][fuzzysort]] was better.
   - I also implemented a custom solution on top where I chop up the text of all
     the posts into bits, search over those bits and display the bits w/ text around
-    them and it turned out nice
+    them and it turned out nice. We'll see how it scales.

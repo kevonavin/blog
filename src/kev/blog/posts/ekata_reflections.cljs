@@ -29,7 +29,7 @@
   (link "answer" "https://meaningness.com/misunderstanding-meaningness-makes-many-miserable").
   But I'm hoping there's at least some guidelines.
   (br)
-  pain points\:
+  pain complaints\:
   (- Largs organizations systematically destroy individual ownership of code.
      Tasks should ideally be less than three days, and anyone can pick up any
      task, so it was really hard to do something meaningful. Only by breaking
@@ -37,7 +37,8 @@
      huge legacy codebase built on top of a bunch of very poorly written macros
      that no one understands and was afraid to touch.  This makes it impossible
      to (link "hold a program in your head" "http://paulgraham.com/head.html")
-     and therefore impossible to write good code or enjoy coding. This is
+     and therefore impossible to write top-notch code or maximally enjoy coding
+     "(though you can still have some fun)" \. This is
      probably why lisps are not used very much in large organizations.
      (br)
      One of my favorite work memories was when\, due to a tight deadline\, it was
@@ -45,15 +46,18 @@
      app. The actual app was relatively boring, but it had to scale
      to thousands of qps, and we designed & built it in a month from scratch.
      So maybe there's some meaning in the lack of organization.)
-  (- No stock ownership. It felt more exciting before we got bought bc
-     everyone owned stock. The celebration of getting bought felt depressing in
-     a sense.)
-  (- I didn't feel like I was really helping anyone. I was just making the rich
+  (- It felt more exciting before we got bought bc everyone owned stock. The VP
+     of engineering was more involved with on-call and fighting fires, and the
+     customer experience seemed more urgent.)
+  (- Nothing wrong with the company, but an inherent aspect of the stage we were
+     at made it so there wasn't much new development. Mainly just integrating with
+     Mastercard to bring the same product there. I'd rather get more experience
+     building new stuff.)
+  #_(- I didn't feel like I was really helping anyone. I was just making the rich
      richer. And if I didn't show up, someone else would fill in seamlessly.)
-  (- coworkers were so smart and so down to just stay. why?
+  #_(- coworkers were so smart and so down to just stay. why?
      (- I know they didn't care about fraud prevention of mastercard's "\"mission\"")
      (- They loved stability?)
      (- Good money / comfort.)
      (- why did (highlight "I stay") for so long?!))
-  (- It seemed like most people there were only m)
   )

@@ -16,10 +16,7 @@
    ["@mui/material" :as mui]
    ["fuzzysort" :as fuzzysort]
    [net.cgrand.xforms :as x]
-   [kev.blog.generated-posts])
-  )
-
-
+   [kev.blog.generated-posts]))
 
 (defn partition-str [s n step]
   (let [len (count s)]
